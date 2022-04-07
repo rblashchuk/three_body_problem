@@ -1,31 +1,25 @@
-
-import scipy as sci
 import numpy as np
-
-import matplotlib.animation as anim
-import matplotlib.pyplot as plt
+import scipy as sci
 import scipy.integrate
-from collections import deque
-from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
+import mpl_toolkits.mplot3d.axes3d as p3
+import matplotlib.animation as animation
 
+# universal gravitation constant
+G = 6.67408e-11 # N-m2/kg2
+# Reference quantities
+m_nd = 1.989e+30 # kg #mass of the sun
+r_nd = 5.326e+12 # m #distance between stars in Alpha Centauri
+v_nd = 30000 # m/s #relative velocity of earth around the sun
+t_nd = 79.91 * 365 * 24 * 3600 * 0.51 # s #orbital period of Alpha Centauri
 
-#Define universal gravitation constant
-G = 6.67408e-11 #N-m2/kg2
-#Reference quantities
-m_nd = 1.989e+30 #kg #mass of the sun
-r_nd = 5.326e+12 #m #distance between stars in Alpha Centauri
-v_nd = 30000 #m/s #relative velocity of earth around the sun
-t_nd = 79.91 * 365 * 24 * 3600 * 0.51 #s #orbital period of Alpha Centauri
-#Net constants
 K1 = G * t_nd * m_nd/(r_nd**2 * v_nd)
 K2 = v_nd * t_nd/r_nd
 
-print(K1)
-print(K2)
 #Define masses
-m1 = 5 #Alpha Centauri A
-m2 = 1 #Alpha Centauri B
-m3 = 9 #Third Star
+m1 = 5
+m2 = 1
+m3 = 9
 #Define initial position vectors
 r1 = [5, 0, 0] #m
 r2 = [0, 1, 4]
@@ -34,7 +28,6 @@ r3 = [0, 1, 5] #m
 r1 = np.array(r1, dtype="float64")
 r2 = np.array(r2, dtype="float64")
 r3 = np.array(r3, dtype="float64")
-
 
 #Find Centre of Mass
 r_com = (m1*r1 + m2*r2 + m3*r3)/(m1 + m2 + m3)
@@ -77,10 +70,20 @@ def ThreeBodyEquations(w, t, G, m1, m2, m3):
     derivs = np.concatenate((r_derivs, v_derivs))
     return derivs
 
+
+def update_lines(num, dataLines, lines) :
+    for line, data in zip(lines, dataLines) :
+        # NOTE: there is no .set_data() for 3 dim data...
+        line.set_data(data[0:2, :num])
+        line.set_3d_properties(data[2,:num])
+        ax.relim()  # update axes limits
+    return lines
+
+
 #Package initial parameters
 init_params = np.array([r1, r2, r3, v1, v2, v3]) #Initial parameters
 init_params = init_params.flatten()
-time_span = np.linspace(0, 20, 500)
+time_span = np.linspace(0, 200, 5000)
 
 three_body_sol = sci.integrate.odeint(ThreeBodyEquations, init_params, time_span, args=(G, m1, m2, m3))
 
@@ -88,24 +91,46 @@ r1_sol = three_body_sol[:,:3]
 r2_sol = three_body_sol[:,3:6]
 r3_sol = three_body_sol[:,6:9]
 
-#Create figure
-fig = plt.figure(figsize=(15,15))
-ax = fig.add_subplot(111,projection="3d")
 
-#Plot the orbits
-ax.plot(r1_sol[:, 0], r1_sol[:, 1], r1_sol[:, 2], color="#FF93C0")
-ax.plot(r2_sol[:, 0], r2_sol[:, 1], r2_sol[:, 2], color="#9DAEFF")
-ax.plot(r3_sol[:, 0], r3_sol[:, 1], r3_sol[:, 2], color="#FFB896")
+r1_data = [[r[0] for r in r1_sol], [r[1] for r in r1_sol], [r[2] for r in r1_sol]]
+r2_data = [[r[0] for r in r2_sol], [r[1] for r in r2_sol], [r[2] for r in r2_sol]]
+r3_data = [[r[0] for r in r3_sol], [r[1] for r in r3_sol], [r[2] for r in r3_sol]]
+r1_data = np.array(r1_data)
+r2_data = np.array(r2_data)
+r3_data = np.array(r3_data)
 
-#Plot the final positions of the stars
-ax.scatter(r1_sol[-1][0], r1_sol[-1][1], r1_sol[-1][2], color="#FF93C0", marker="x", s=100, label="Тело 1")
-ax.scatter(r2_sol[-1][0], r2_sol[-1][1], r2_sol[-1][2], color="#9DAEFF", marker="x", s=100, label="Тело 2")
-ax.scatter(r3_sol[-1][0], r3_sol[-1][1], r3_sol[-1][2], color="#FFB896", marker="x", s=100, label="Тело 3")
+data = [r1_data, r2_data, r3_data]
 
-ax.set_xlabel("x", fontsize=14)
-ax.set_ylabel("y", fontsize=14)
-ax.set_zlabel("z", fontsize=14)
+
+# Attaching 3D axis to the figure
+fig = plt.figure()
+ax = p3.Axes3D(fig)
+
+# Fifty lines of random 3-D lines
+
+
+# Creating fifty line objects.
+# NOTE: Can't pass empty arrays into 3d version of plot()
+lines = [ax.plot(dat[0, 0:1], dat[1, 0:1], dat[2, 0:1])[0] for dat in data]
+
+lines[0].set_color("#FF93C0")
+lines[1].set_color("#9DAEFF")
+lines[2].set_color("#FFB896")
+
+# Setting the axes properties
+ax.set_xlim3d([-10, 10])
+ax.set_xlabel('X')
+
+ax.set_ylim3d([-10, 10])
+ax.set_ylabel('Y')
+
+ax.set_zlim3d([-10, 10])
+ax.set_zlabel('Z')
+
+
+# Creating the Animation object
+line_ani = animation.FuncAnimation(fig, update_lines, 5000, fargs=(data, lines),
+                              interval=1, blit=False)
 ax.set_title("Траектории движения трёх тел\n", fontsize=14)
-ax.legend(loc="upper left", fontsize=14)
 
 plt.show()
