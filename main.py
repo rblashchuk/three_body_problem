@@ -91,9 +91,9 @@ v3 = np.array(v3, dtype="float64")
 specify_color = messagebox.askyesno('Цвета', 'Вы хотите сами задать цвета отрисовки траекторий?', parent=parent)
 if specify_color:
     color = [0, 0, 0]
-    color[0] = colorchooser.askcolor(initialcolor=(randint(0, 255), randint(0, 255), randint(0, 255)), parent=parent)
-    color[1] = colorchooser.askcolor(initialcolor=(randint(0, 255), randint(0, 255), randint(0, 255)), parent=parent)
-    color[2] = colorchooser.askcolor(initialcolor=(randint(0, 255), randint(0, 255), randint(0, 255)), parent=parent)
+    color[0] = colorchooser.askcolor(initialcolor=(randint(0, 255), randint(0, 255), randint(0, 255)), parent=parent)[1]
+    color[1] = colorchooser.askcolor(initialcolor=(randint(0, 255), randint(0, 255), randint(0, 255)), parent=parent)[1]
+    color[2] = colorchooser.askcolor(initialcolor=(randint(0, 255), randint(0, 255), randint(0, 255)), parent=parent)[1]
 
 else:
     color = ["#FF93C0", "#9DAEFF", "#FFB896"]
@@ -141,7 +141,7 @@ def update_lines(num, data_lines, lines):
 
 init_params = np.array([r1, r2, r3, v1, v2, v3])  # initial parameters array
 init_params = init_params.flatten()
-time_span = np.linspace(0, 200, 5000)
+time_span = np.linspace(0, 20, 500)
 
 three_body_sol = sciint.odeint(three_body_equations, init_params, time_span, args=(G, m1, m2, m3))
 
@@ -176,7 +176,7 @@ lines[1].set_color(color[1])
 lines[2].set_color(color[2])
 
 # creating the Animation object
-line_ani = animation.FuncAnimation(fig, update_lines, 5000, fargs=(data, lines), interval=1, blit=False)
+line_ani = animation.FuncAnimation(fig, update_lines, 500, fargs=(data, lines), interval=1, blit=False)
 
 ax.legend(scat, ['Тело 1', 'Тело 2', 'Тело 3'], loc='lower left')
 plt.show()
